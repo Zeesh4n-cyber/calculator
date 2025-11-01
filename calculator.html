@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Neon Scientific Calculator</title>
+<style>
+  :root{
+    --bg:#05060a;
+    --panel:#071226;
+    --neon1:#00e5ff; /* cyan */
+    --neon2:#8a2be2; /* purple */
+    --accent:#39ff14; /* green */
+    --muted:rgba(255,255,255,0.12);
+    --glass: rgba(255,255,255,0.03);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+  html,body{height:100%;margin:0;background:radial-gradient(1200px 600px at 10% 10%, rgba(58,123,213,0.08), transparent 10%),
+    radial-gradient(800px 400px at 90% 90%, rgba(138,43,226,0.06), transparent 10%), var(--bg);display:flex;align-items:center;justify-content:center;color:#e6f0ff}
+
+  .calc{
+    width:360px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius:16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6), 0 0 40px rgba(0,229,255,0.04) inset;
+    border:1px solid rgba(255,255,255,0.04);
+    padding:18px;
+    backdrop-filter: blur(6px);
+  }
+
+  .display{
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    height:74px;border-radius:12px;padding:12px;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;gap:6px;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,0.03)
+  }
+  .display .expr{font-size:14px;color:var(--muted);width:100%;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:6px}
+  .display .result{font-size:22px;color:#fff;font-weight:600;text-shadow:0 4px 24px rgba(58,123,213,0.12)}
+
+  .row{display:flex;gap:8px;margin-top:12px}
+  .btn{
+    flex:1;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);text-align:center;font-weight:600;cursor:pointer;user-select:none;
+    box-shadow:0 6px 18px rgba(0,0,0,0.6);
+    transition:transform .08s ease, box-shadow .12s ease;
+    background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+  }
+  .btn:active{transform:translateY(2px)}
+
+  /* color accents */
+  .op{color:var(--neon1);box-shadow:0 0 14px rgba(0,229,255,0.06),0 6px 18px rgba(0,0,0,0.6)}
+  .fun{color:var(--neon2);box-shadow:0 0 14px rgba(138,43,226,0.06)}
+  .num{color:#fff}
+  .equals{background:linear-gradient(90deg,var(--neon2),var(--neon1));color:#001;background-blend-mode:screen;box-shadow:0 8px 30px rgba(138,43,226,0.12),0 0 30px rgba(0,229,255,0.08)}
+  .clear{color:#ff6b6b}
+
+  /* neon glow on hover */
+  .btn.op:hover{box-shadow:0 0 18px rgba(0,229,255,0.18)}
+  .btn.fun:hover{box-shadow:0 0 18px rgba(138,43,226,0.18)}
+  .btn.equals:hover{transform:translateY(-2px);box-shadow:0 0 32px rgba(138,43,226,0.22),0 10px 40px rgba(0,229,255,0.06)}
+
+  /* small controls */
+  .small{flex:0.8;padding:10px;font-size:13px}
+  .wide{flex:2}
+  .mode {
+    display:flex;gap:6px;align-items:center;margin-top:10px;justify-content:center
+  }
+  .mode button{padding:8px 10px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);cursor:pointer}
+  .mode button.active{color:#fff;border-color:rgba(255,255,255,0.08);box-shadow:0 6px 16px rgba(0,0,0,0.6),0 0 18px rgba(0,229,255,0.06)}
+
+  /* responsive */
+  @media (max-width:420px){.calc{width:94vw;padding:12px}.display{height:68px}}
+</style>
+</head>
+<body>
+  <div class="calc" role="application" aria-label="Scientific calculator">
+    <div class="display" id="display">
+      <div class="expr" id="expr">0</div>
+      <div class="result" id="result">0</div>
+    </div>
+
+    <div class="mode" aria-hidden="false">
+      <button id="degBtn" class="active">DEG</button>
+      <button id="radBtn">RAD</button>
+      <div style="flex:1"></div>
+      <button id="ansBtn" class="small">ANS</button>
+      <button id="clearBtn" class="small clear">C</button>
+    </div>
+
+    <!-- rows -->
+    <div class="row" style="margin-top:14px">
+      <div class="btn fun" data-val="sin(">sin</div>
+      <div class="btn fun" data-val="cos(">cos</div>
+      <div class="btn fun" data-val="tan(">tan</div>
+      <div class="btn op" data-val="(">()</div>
+    </div>
+
+    <div class="row">
+      <div class="btn fun" data-val="asin(">asin</div>
+      <div class="btn fun" data-val="acos(">acos</div>
+      <div class="btn fun" data-val="atan(">atan</div>
+      <div class="btn op" data-val=")">)</div>
+    </div>
+
+    <div class="row">
+      <div class="btn fun" data-val="ln(">ln</div>
+      <div class="btn fun" data-val="log(">log</div>
+      <div class="btn fun" data-val="sqrt(">√</div>
+      <div class="btn fun" data-val="^">^</div>
+    </div>
+
+    <div class="row">
+      <div class="btn num" data-val="7">7</div>
+      <div class="btn num" data-val="8">8</div>
+      <div class="btn num" data-val="9">9</div>
+      <div class="btn op" data-val="/">÷</div>
+    </div>
+
+    <div class="row">
+      <div class="btn num" data-val="4">4</div>
+      <div class="btn num" data-val="5">5</div>
+      <div class="btn num" data-val="6">6</div>
+      <div class="btn op" data-val="*">×</div>
+    </div>
+
+    <div class="row">
+      <div class="btn num" data-val="1">1</div>
+      <div class="btn num" data-val="2">2</div>
+      <div class="btn num" data-val="3">3</div>
+      <div class="btn op" data-val="-">−</div>
+    </div>
+
+    <div class="row">
+      <div class="btn num wide" data-val="0">0</div>
+      <div class="btn num" data-val=".">.</div>
+      <div class="btn equals" id="equals">=</div>
+      <div class="btn op" data-val="+">+</div>
+    </div>
+
+    <div class="row">
+      <div class="btn fun" data-val="abs(">abs</div>
+      <div class="btn fun" data-val="exp(">exp</div>
+      <div class="btn fun" data-val="fact(" title="factorial">n!</div>
+      <div class="btn fun" data-val="pi">π</div>
+    </div>
+
+  </div>
+
+<script>
+(function(){
+  const exprEl = document.getElementById('expr');
+  const resultEl = document.getElementById('result');
+  let expr = '';
+  let ans = 0;
+  let mode = 'DEG'; // or RAD
+
+  // helper math functions exposed to evaluator
+  function degToRad(x){return x * Math.PI / 180}
+  function sin(x){ return mode==='DEG' ? Math.sin(degToRad(x)) : Math.sin(x); }
+  function cos(x){ return mode==='DEG' ? Math.cos(degToRad(x)) : Math.cos(x); }
+  function tan(x){ return mode==='DEG' ? Math.tan(degToRad(x)) : Math.tan(x); }
+  function asin(x){ const v = Math.asin(x); return mode==='DEG' ? v*180/Math.PI : v; }
+  function acos(x){ const v = Math.acos(x); return mode==='DEG' ? v*180/Math.PI : v; }
+  function atan(x){ const v = Math.atan(x); return mode==='DEG' ? v*180/Math.PI : v; }
+  function ln(x){ return Math.log(x); }
+  function log(x){ return Math.log10 ? Math.log10(x) : Math.log(x)/Math.LN10; }
+  function sqrt(x){ return Math.sqrt(x); }
+  function exp(x){ return Math.exp(x); }
+  function abs(x){ return Math.abs(x); }
+  const pi = Math.PI;
+
+  function fact(n){
+    n = Math.floor(n);
+    if(n < 0) return NaN;
+    let res = 1;
+    for(let i=2;i<=n;i++) res *= i;
+    return res;
+  }
+
+  function safeEval(s){
+    try{
+      // replace unicode pi
+      s = s.replace(/π/g,'pi');
+      // replace factorial occurrences like (expr)! or number!
+      // handle simple parenthesis or numbers before !
+      s = s.replace(/(\([^()]+\))!/g, 'fact($1)');
+      s = s.replace(/(\d+(?:\.\d+)?)!/g, 'fact($1)');
+
+      // allow ^ as power -> replace a^b with (a**b)
+      // use regex to convert x^y to x**y (JS supports **) but careful: replace ^ not inside identifiers
+      s = s.replace(/\^/g,'**');
+
+      // replace ans with last answer
+      s = s.replace(/\bANS\b/gi, '('+String(ans)+')');
+
+      // create function with limited scope (expose only allowed functions)
+      const f = new Function('sin','cos','tan','asin','acos','atan','ln','log','sqrt','exp','abs','fact','pi','ANS','mode','return ' + s);
+      const val = f(sin,cos,tan,asin,acos,atan,ln,log,sqrt,exp,abs,fact,pi,ans,mode);
+      return val;
+    }catch(e){
+      return NaN;
+    }
+  }
+
+  function updateDisplay(){
+    exprEl.textContent = expr || '0';
+    const v = safeEval(expr || '0');
+    resultEl.textContent = (isFinite(v) ? String(Math.round((v+Number.EPSILON)*100000000)/100000000) : 'Error');
+  }
+
+  // button click handling
+  document.querySelectorAll('.btn').forEach(b => {
+    b.addEventListener('click', ()=>{
+      const val = b.getAttribute('data-val');
+      if(b.id === 'equals') return;
+      if(b.id === 'clearBtn') return;
+      if(val){
+        // special handling for pi and fact button
+        if(val === 'pi') { expr += 'pi'; }
+        else if(val === 'fact(') { expr += 'fact('; }
+        else expr += val;
+        updateDisplay();
+      }
+    });
+  });
+
+  // equals, clear, ans, deg/rad, backspace
+  document.getElementById('equals').addEventListener('click', ()=>{
+    const v = safeEval(expr || '0');
+    if(isFinite(v)){
+      ans = v;
+      resultEl.textContent = String(v);
+      expr = String(v);
+    } else {
+      resultEl.textContent = 'Error';
+    }
+  });
+
+  document.getElementById('clearBtn').addEventListener('click', ()=>{
+    expr=''; ans=0; updateDisplay();
+  });
+
+  document.getElementById('ansBtn').addEventListener('click', ()=>{
+    expr += 'ANS'; updateDisplay();
+  });
+
+  document.getElementById('degBtn').addEventListener('click', ()=>{ mode='DEG'; document.getElementById('degBtn').classList.add('active'); document.getElementById('radBtn').classList.remove('active'); updateDisplay(); });
+  document.getElementById('radBtn').addEventListener('click', ()=>{ mode='RAD'; document.getElementById('radBtn').classList.add('active'); document.getElementById('degBtn').classList.remove('active'); updateDisplay(); });
+
+  // keyboard support
+  window.addEventListener('keydown', (e)=>{
+    const key = e.key;
+    if((/\d|\./).test(key)) { expr += key; updateDisplay(); return; }
+    if(key === 'Enter' || key === '='){ e.preventDefault(); document.getElementById('equals').click(); return; }
+    if(key === 'Backspace'){ expr = expr.slice(0,-1); updateDisplay(); return; }
+    if(key === 'Escape'){ expr=''; updateDisplay(); return; }
+    const map = { '+':'+','-':'-','*':'*','/':'/','^':'^','(':'(',' )':')' };
+    if(map[key]){ expr += map[key]; updateDisplay(); return; }
+    // shortcuts for functions (type letters)
+    // allow typing 'sin(', 'cos(' etc.
+  });
+
+  // init
+  updateDisplay();
+})();
+</script>
+</body>
+</html>
